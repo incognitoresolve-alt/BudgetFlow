@@ -632,9 +632,8 @@
   .modal-overlay.open { opacity: 1; pointer-events: all; }
   
   /* FORCE LE GUIDE AU-DESSUS DE TOUT */
-  #guideModalOverlay {
-    z-index: 10000; 
-  }
+  #guideModalOverlay { z-index: 10000; }
+  #syncModalOverlay { z-index: 5000; }
 
   .modal {
     background: var(--surface);
@@ -728,6 +727,7 @@
     .month-tab { padding: 10px 14px; font-size: 10px; }
     .advice-banner { flex-direction: column; gap: 16px; text-align: center; }
     .advice-actions { width: 100%; }
+    .header-right .btn-ghost { padding: 7px 10px; font-size: 10px; }
   }
 </style>
 </head>
@@ -779,7 +779,9 @@
   <div class="logo">Budget<span>Flow</span></div>
   <div class="header-right">
     <span class="year-badge" id="yearBadge"></span>
-    <button class="btn btn-ghost" onclick="exportData()">⬇ Export CSV</button>
+    <!-- NOUVEAU BOUTON TRANSFERT -->
+    <button class="btn btn-ghost" onclick="openSyncModal()">🔄 Transfert</button>
+    <button class="btn btn-ghost" onclick="exportData()">⬇ CSV</button>
     <div class="user-badge" onclick="openLogoutModal()" title="Changer de compte">
       <div class="user-avatar" id="headerAvatar">?</div>
       <span class="user-name" id="headerUserName">—</span>
@@ -931,6 +933,32 @@
   </div>
 </div>
 
+<!-- SYNC / TRANSFER MODAL -->
+<div class="modal-overlay" id="syncModalOverlay" onclick="if(event.target.id === 'syncModalOverlay') closeSyncModal()">
+  <div class="modal" style="width: 400px; max-width: 90vw;">
+    <div class="modal-title">🔄 Transférer / Restaurer</div>
+    
+    <div style="margin-bottom: 20px;">
+      <label style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px;">📤 Exporter (Copier ce code)</label>
+      <textarea id="exportCodeInput" readonly style="width: 100%; height: 60px; background: var(--surface2); border: 1px solid var(--border); color: var(--accent); padding: 8px; font-family: monospace; font-size: 10px; border-radius: 6px; margin-top: 6px; resize: none;"></textarea>
+      <div style="display: flex; gap: 8px; margin-top: 8px;">
+        <button class="btn btn-ghost" style="flex:1; justify-content:center;" onclick="copySyncCode()">📋 Copier</button>
+        <button class="btn btn-ghost" style="flex:1; justify-content:center;" onclick="emailSyncCode()">✉️ Mail</button>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 10px;">
+      <label style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px;">📥 Importer (Coller un code)</label>
+      <textarea id="importCodeInput" placeholder="Collez votre code ici depuis votre e-mail..." style="width: 100%; height: 60px; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 8px; font-family: monospace; font-size: 10px; border-radius: 6px; margin-top: 6px; resize: none;"></textarea>
+      <button class="btn btn-accent" style="width: 100%; justify-content:center; margin-top: 8px;" onclick="importSyncCode()">Restaurer les données</button>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-danger" style="width: 100%; justify-content: center;" onclick="closeSyncModal()">Fermer</button>
+    </div>
+  </div>
+</div>
+
 <!-- LOGOUT / SWITCH ACCOUNT MODAL -->
 <div id="logoutModal" onclick="closeLogoutModal(event)">
   <div class="modal">
@@ -1075,6 +1103,59 @@ function closeGuideModal() {
 }
 function closeGuideModalOutside(e) {
   if (e.target.id === 'guideModalOverlay') closeGuideModal();
+}
+
+// ═══════════════════════════════
+// SYNC / TRANSFER (EXPORT/IMPORT)
+// ═══════════════════════════════
+function openSyncModal() {
+  // Generate encoded string of current state
+  const encodedState = btoa(encodeURIComponent(JSON.stringify(state)));
+  document.getElementById('exportCodeInput').value = encodedState;
+  document.getElementById('importCodeInput').value = '';
+  document.getElementById('syncModalOverlay').classList.add('open');
+}
+
+function closeSyncModal() {
+  document.getElementById('syncModalOverlay').classList.remove('open');
+}
+
+function copySyncCode() {
+  const copyText = document.getElementById('exportCodeInput');
+  copyText.select();
+  copyText.setSelectionRange(0, 99999); 
+  navigator.clipboard.writeText(copyText.value).then(() => {
+    alert("✅ Code de transfert copié dans le presse-papiers !");
+  });
+}
+
+function emailSyncCode() {
+  const code = document.getElementById('exportCodeInput').value;
+  const subject = encodeURIComponent("Mes données BudgetFlow");
+  const body = encodeURIComponent("Voici le code de transfert pour restaurer vos données BudgetFlow sur un autre appareil :
+
+" + code + "
+
+Ouvrez BudgetFlow, connectez-vous avec votre pseudo, et collez ce code dans la section '🔄 Transfert'.");
+  window.location.href = "mailto:?subject=" + subject + "&body=" + body;
+}
+
+function importSyncCode() {
+  const code = document.getElementById('importCodeInput').value.trim();
+  if(!code) return;
+  
+  try {
+    const decodedState = JSON.parse(decodeURIComponent(atob(code)));
+    if (confirm("⚠️ Attention : La restauration va écraser vos données actuelles sur cet appareil. Voulez-vous continuer ?")) {
+      state = decodedState;
+      save();
+      renderAll();
+      closeSyncModal();
+      alert("🎉 Données restaurées avec succès !");
+    }
+  } catch(e) {
+    alert("❌ Le code de restauration est invalide ou incomplet.");
+  }
 }
 
 // ═══════════════════════════════
@@ -1355,7 +1436,8 @@ document.addEventListener('keydown', e => {
     closeModal(); 
     closeColModal(); 
     closeLogoutModal(null, true); 
-    closeGuideModal(); 
+    closeGuideModal();
+    closeSyncModal();
   }
   if (e.key === 'Enter' && document.getElementById('modalOverlay').classList.contains('open')) confirmAddRow();
   if (e.key === 'Enter' && document.getElementById('colModalOverlay').classList.contains('open')) confirmAddCol();
@@ -1368,12 +1450,25 @@ function exportData() {
   const mi = currentMonth;
   const rows = state[mi].expenseRows || [];
   const inc = state[mi].incomeRows || [];
-  let csv = `Budget ${MONTHS[mi]} ${YEAR} — ${currentUser}\n\n`;
-  csv += `REVENUS\nSource,Montant\n`;
-  inc.forEach(r => csv += `"${r.label}",${r.amount || 0}\n`);
-  csv += `\nDÉPENSES\nLibellé,Catégorie,Montant,Note\n`;
-  rows.forEach(r => csv += `"${r.label}","${r.cat}",${r.amount || 0},"${r.note || ''}"\n`);
-  csv += `\nTotal revenus,${calcIncome(mi)}\nTotal dépenses,${calcExpenses(mi)}\nSolde,${calcIncome(mi) - calcExpenses(mi)}\n`;
+  let csv = `Budget ${MONTHS[mi]} ${YEAR} — ${currentUser}
+
+`;
+  csv += `REVENUS
+Source,Montant
+`;
+  inc.forEach(r => csv += `"${r.label}",${r.amount || 0}
+`);
+  csv += `
+DÉPENSES
+Libellé,Catégorie,Montant,Note
+`;
+  rows.forEach(r => csv += `"${r.label}","${r.cat}",${r.amount || 0},"${r.note || ''}"
+`);
+  csv += `
+Total revenus,${calcIncome(mi)}
+Total dépenses,${calcExpenses(mi)}
+Solde,${calcIncome(mi) - calcExpenses(mi)}
+`;
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
