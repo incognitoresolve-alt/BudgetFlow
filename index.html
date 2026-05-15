@@ -6,7 +6,6 @@
 <title>BudgetFlow — Planificateur</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
 
-<!-- 🌟 AJOUTS PWA 🌟 -->
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#0a0c0f">
 <link rel="apple-touch-icon" href="./298857.jpg">
@@ -733,9 +732,6 @@
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════
-     WELCOME SCREEN
-════════════════════════════════════════ -->
 <div id="welcomeScreen">
   <div class="welcome-noise"></div>
   <div class="welcome-glow"></div>
@@ -770,16 +766,12 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════
-     APP SHELL
-════════════════════════════════════════ -->
 <div id="appShell">
 
 <header>
   <div class="logo">Budget<span>Flow</span></div>
   <div class="header-right">
     <span class="year-badge" id="yearBadge"></span>
-    <!-- NOUVEAU BOUTON TRANSFERT -->
     <button class="btn btn-ghost" onclick="openSyncModal()">🔄 Transfert</button>
     <button class="btn btn-ghost" onclick="exportData()">⬇ CSV</button>
     <div class="user-badge" onclick="openLogoutModal()" title="Changer de compte">
@@ -792,7 +784,6 @@
 <nav class="month-nav" id="monthNav"></nav>
 
 <main>
-  <!-- BANDEAU D'ÉDUCATION FINANCIÈRE -->
   <div id="adviceBanner" class="advice-banner">
     <div class="advice-icon">💡</div>
     
@@ -834,7 +825,6 @@
     </div>
   </div>
 
-  <!-- Income table -->
   <div class="income-section">
     <div class="income-header">
       <span class="income-title">+ Revenus</span>
@@ -853,7 +843,6 @@
     </table>
   </div>
 
-  <!-- Expenses table -->
   <div class="table-section">
     <div class="table-header">
       <span class="table-title">Dépenses — <span id="monthTitle">—</span></span>
@@ -877,17 +866,13 @@
     </table>
   </div>
 
-  <!-- Notes -->
   <div class="notes-section">
     <div class="notes-label">Notes du mois</div>
     <textarea class="notes-input" id="notesInput" placeholder="Remarques, rappels, priorités…" oninput="saveNotes()"></textarea>
   </div>
 </main>
 
-</div><!-- /appShell -->
-
-<!-- ADD ROW MODAL -->
-<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+</div><div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
   <div class="modal">
     <div class="modal-title">Ajouter une dépense</div>
     <div class="modal-field">
@@ -918,7 +903,6 @@
   </div>
 </div>
 
-<!-- ADD COLUMN MODAL -->
 <div class="col-modal-overlay" id="colModalOverlay" onclick="closeColModalOutside(event)">
   <div class="modal">
     <div class="modal-title">Ajouter une colonne</div>
@@ -933,7 +917,6 @@
   </div>
 </div>
 
-<!-- SYNC / TRANSFER MODAL -->
 <div class="modal-overlay" id="syncModalOverlay" onclick="if(event.target.id === 'syncModalOverlay') closeSyncModal()">
   <div class="modal" style="width: 400px; max-width: 90vw;">
     <div class="modal-title">🔄 Transférer / Restaurer</div>
@@ -959,7 +942,6 @@
   </div>
 </div>
 
-<!-- LOGOUT / SWITCH ACCOUNT MODAL -->
 <div id="logoutModal" onclick="closeLogoutModal(event)">
   <div class="modal">
     <div class="modal-title">Mon espace</div>
@@ -978,7 +960,6 @@
   </div>
 </div>
 
-<!-- MODAL MODE D'EMPLOI -->
 <div class="modal-overlay" id="guideModalOverlay" onclick="closeGuideModalOutside(event)">
   <div class="modal" style="width: 450px; max-width: 90vw;">
     <div class="modal-title">📖 Mode d'emploi (Très simple !)</div>
@@ -1059,15 +1040,15 @@ function enterApp() {
   const errEl = document.getElementById('welcomeError');
 
   if (!raw) {
-    errEl.textContent = 'Veuillez entrer un code d\'accès.';
+    errEl.textContent = "Veuillez entrer un code d'accès.";
     document.getElementById('userCodeInput').focus();
     return;
   }
   if (raw.length < 2) {
-    errEl.textContent = 'Le code doit contenir au moins 2 caractères.';
+    errEl.textContent = "Le code doit contenir au moins 2 caractères.";
     return;
   }
-  errEl.textContent = '';
+  errEl.textContent = "";
 
   currentUser = raw;
   load();
@@ -1109,7 +1090,6 @@ function closeGuideModalOutside(e) {
 // SYNC / TRANSFER (EXPORT/IMPORT)
 // ═══════════════════════════════
 function openSyncModal() {
-  // Generate encoded string of current state
   const encodedState = btoa(encodeURIComponent(JSON.stringify(state)));
   document.getElementById('exportCodeInput').value = encodedState;
   document.getElementById('importCodeInput').value = '';
@@ -1132,11 +1112,7 @@ function copySyncCode() {
 function emailSyncCode() {
   const code = document.getElementById('exportCodeInput').value;
   const subject = encodeURIComponent("Mes données BudgetFlow");
-  const body = encodeURIComponent("Voici le code de transfert pour restaurer vos données BudgetFlow sur un autre appareil :
-
-" + code + "
-
-Ouvrez BudgetFlow, connectez-vous avec votre pseudo, et collez ce code dans la section '🔄 Transfert'.");
+  const body = encodeURIComponent("Voici le code de transfert pour restaurer vos données BudgetFlow sur un autre appareil :\n\n" + code + "\n\nOuvrez BudgetFlow, connectez-vous avec votre pseudo, et collez ce code dans la section '🔄 Transfert'.");
   window.location.href = "mailto:?subject=" + subject + "&body=" + body;
 }
 
@@ -1188,27 +1164,26 @@ function generateAdvice(inc, exp, bal) {
   const userName = currentUser ? currentUser.charAt(0).toUpperCase() + currentUser.slice(1) : '';
 
   if (inc === 0) {
-    adviceEl.innerHTML = `Saisissez vos revenus pour que le système puisse analyser la situation de <strong>${userName}</strong>.`;
+    adviceEl.innerHTML = "Saisissez vos revenus pour que le système puisse analyser la situation de <strong>" + userName + "</strong>.";
     return;
   }
 
   const savingsRate = (bal / inc) * 100;
   
-  // Isoler les charges fixes (Fixe, Crédit, Domiciliation)
   const fixedRows = (state[currentMonth].expenseRows || []).filter(r => ['fixed', 'domiciliation', 'credit'].includes(r.cat));
   const fixedExp = fixedRows.reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
   const fixedRate = (fixedExp / inc) * 100;
 
   if (bal < 0) {
-    adviceEl.innerHTML = `<span class="highlight-red">⚠️ Déficit !</span> Vos dépenses dépassent vos revenus de ${Math.abs(bal).toFixed(0)}€. Règle d'or : réduisez immédiatement vos dépenses non-essentielles ("Catégorie: Variable") pour rééquilibrer le budget de ${userName}.`;
+    adviceEl.innerHTML = "<span class=\"highlight-red\">⚠️ Déficit !</span> Vos dépenses dépassent vos revenus de " + Math.abs(bal).toFixed(0) + "€. Règle d'or : réduisez immédiatement vos dépenses non-essentielles (\"Catégorie: Variable\") pour rééquilibrer le budget de " + userName + ".";
   } else if (fixedRate > 60) {
-    adviceEl.innerHTML = `📊 <strong>Alerte Charges Fixes :</strong> Elles représentent ${fixedRate.toFixed(0)}% de vos revenus (la cible santé est < 50%). Essayez de renégocier vos contrats ou regrouper vos crédits pour libérer du cash-flow.`;
+    adviceEl.innerHTML = "📊 <strong>Alerte Charges Fixes :</strong> Elles représentent " + fixedRate.toFixed(0) + "% de vos revenus (la cible santé est < 50%). Essayez de renégocier vos contrats ou regrouper vos crédits pour libérer du cash-flow.";
   } else if (savingsRate < 10) {
-    adviceEl.innerHTML = `🌱 <strong>Taux d'épargne : ${savingsRate.toFixed(0)}%</strong>. C'est un bon début ! Pour atteindre l'indépendance financière, l'objectif est d'appliquer la règle du 50/30/20 et de viser les 20% d'épargne.`;
+    adviceEl.innerHTML = "🌱 <strong>Taux d'épargne : " + savingsRate.toFixed(0) + "%</strong>. C'est un bon début ! Pour atteindre l'indépendance financière, l'objectif est d'appliquer la règle du 50/30/20 et de viser les 20% d'épargne.";
   } else if (savingsRate >= 10 && savingsRate < 20) {
-    adviceEl.innerHTML = `📈 <strong>Bonne gestion :</strong> Capacité d'épargne solide de ${savingsRate.toFixed(0)}%. La prochaine étape pour ${userName} est de s'assurer de posséder un fonds d'urgence équivalent à 3 à 6 mois de dépenses.`;
+    adviceEl.innerHTML = "📈 <strong>Bonne gestion :</strong> Capacité d'épargne solide de " + savingsRate.toFixed(0) + "%. La prochaine étape pour " + userName + " est de s'assurer de posséder un fonds d'urgence équivalent à 3 à 6 mois de dépenses.";
   } else {
-    adviceEl.innerHTML = `<span class="highlight-green">🚀 Excellente rentabilité !</span> Vous épargnez ${savingsRate.toFixed(0)}%. Le secret de l'indépendance financière est maintenant de faire travailler cet argent (Bourse, ETF, Immobilier) pour générer des revenus passifs.`;
+    adviceEl.innerHTML = "<span class=\"highlight-green\">🚀 Excellente rentabilité !</span> Vous épargnez " + savingsRate.toFixed(0) + "%. Le secret de l'indépendance financière est maintenant de faire travailler cet argent (Bourse, ETF, Immobilier) pour générer des revenus passifs.";
   }
 }
 
@@ -1222,7 +1197,7 @@ function renderNav() {
     const total = calcExpenses(i);
     const tab = document.createElement('button');
     tab.className = 'month-tab' + (i === currentMonth ? ' active' : '');
-    tab.innerHTML = `${m.slice(0,3).toUpperCase()}<span class="month-total">${total > 0 ? formatAmt(total) : '—'}</span>`;
+    tab.innerHTML = m.slice(0,3).toUpperCase() + "<span class=\"month-total\">" + (total > 0 ? formatAmt(total) : '—') + "</span>";
     tab.onclick = () => { currentMonth = i; renderAll(); };
     nav.appendChild(tab);
   });
@@ -1253,7 +1228,6 @@ function renderStats() {
   document.getElementById('statDomicil').textContent = formatAmt(dom);
   document.getElementById('statDomicilCount').textContent = domRows.length + ' auto-débit(s)';
 
-  // Déclencher le calcul du conseil
   generateAdvice(inc, exp, bal);
 }
 
@@ -1289,7 +1263,7 @@ function updateIncomeRow(id, field, val) {
 }
 
 function deleteIncomeRow(id) { 
-  if (!confirm('Voulez-vous vraiment supprimer ce revenu ?')) return;
+  if (!confirm("Voulez-vous vraiment supprimer ce revenu ?")) return;
   state[currentMonth].incomeRows = state[currentMonth].incomeRows.filter(r => r.id !== id); 
   save(); renderAll(); 
 }
@@ -1310,9 +1284,9 @@ function renderExpenseTable() {
   const head = document.getElementById('expenseHead');
   head.innerHTML = '';
   const tr = document.createElement('tr');
-  let ths = `<th style="width:28px">✓</th><th>Libellé</th><th>Catégorie</th><th style="text-align:right">Montant</th><th>Note</th>`;
-  extraCols.forEach((col, ci) => { ths += `<th class="extra-col">${esc(col)}<span class="col-del" onclick="deleteCol(${ci})">×</span></th>`; });
-  ths += `<th style="width:40px"></th>`;
+  let ths = "<th style=\"width:28px\">✓</th><th>Libellé</th><th>Catégorie</th><th style=\"text-align:right\">Montant</th><th>Note</th>";
+  extraCols.forEach((col, ci) => { ths += "<th class=\"extra-col\">" + esc(col) + "<span class=\"col-del\" onclick=\"deleteCol(" + ci + ")\">×</span></th>"; });
+  ths += "<th style=\"width:40px\"></th>";
   tr.innerHTML = ths;
   head.appendChild(tr);
 
@@ -1325,7 +1299,7 @@ function renderExpenseTable() {
     let extraTds = '';
     extraCols.forEach((col, ci) => {
       const val = (row.extras || {})[ci] || '';
-      extraTds += `<td><input class="cell-input extra-cell" value="${esc(val)}" placeholder="—" oninput="updateExtra('${row.id}',${ci},this.value)" /></td>`;
+      extraTds += "<td><input class=\"cell-input extra-cell\" value=\"" + esc(val) + "\" placeholder=\"—\" oninput=\"updateExtra('" + row.id + "'," + ci + ",this.value)\" /></td>";
     });
 
     tr.innerHTML = `
@@ -1345,7 +1319,7 @@ function renderExpenseTable() {
   const addTr = document.createElement('tr');
   addTr.className = 'add-row-tr';
   const colCount = 6 + extraCols.length;
-  addTr.innerHTML = `<td colspan="${colCount}"><button class="add-row-btn-inline" onclick="openModal()">+ Ajouter une dépense</button></td>`;
+  addTr.innerHTML = "<td colspan=\"" + colCount + "\"><button class=\"add-row-btn-inline\" onclick=\"openModal()\">+ Ajouter une dépense</button></td>";
   tbody.appendChild(addTr);
 }
 
@@ -1359,7 +1333,7 @@ function updateExtra(id, ci, val) {
 }
 
 function deleteRow(id) { 
-  if (!confirm('Voulez-vous vraiment supprimer cette dépense ?')) return;
+  if (!confirm("Voulez-vous vraiment supprimer cette dépense ?")) return;
   state[currentMonth].expenseRows = (state[currentMonth].expenseRows || []).filter(r => r.id !== id); 
   save(); renderAll(); 
 }
@@ -1374,7 +1348,7 @@ function cyclecat(id) {
   if (row) { const i = cats.indexOf(row.cat); row.cat = cats[(i + 1) % cats.length]; } save(); renderAll();
 }
 function deleteCol(ci) {
-  if (!confirm('Voulez-vous vraiment supprimer cette colonne ? Toutes les données associées seront perdues.')) return;
+  if (!confirm("Voulez-vous vraiment supprimer cette colonne ? Toutes les données associées seront perdues.")) return;
   state[currentMonth].extraCols.splice(ci, 1);
   (state[currentMonth].expenseRows || []).forEach(r => {
     if (r.extras) {
@@ -1450,29 +1424,17 @@ function exportData() {
   const mi = currentMonth;
   const rows = state[mi].expenseRows || [];
   const inc = state[mi].incomeRows || [];
-  let csv = `Budget ${MONTHS[mi]} ${YEAR} — ${currentUser}
-
-`;
-  csv += `REVENUS
-Source,Montant
-`;
-  inc.forEach(r => csv += `"${r.label}",${r.amount || 0}
-`);
-  csv += `
-DÉPENSES
-Libellé,Catégorie,Montant,Note
-`;
-  rows.forEach(r => csv += `"${r.label}","${r.cat}",${r.amount || 0},"${r.note || ''}"
-`);
-  csv += `
-Total revenus,${calcIncome(mi)}
-Total dépenses,${calcExpenses(mi)}
-Solde,${calcIncome(mi) - calcExpenses(mi)}
-`;
+  let csv = "Budget " + MONTHS[mi] + " " + YEAR + " — " + currentUser + "\r\n\r\n";
+  csv += "REVENUS\r\nSource,Montant\r\n";
+  inc.forEach(r => { csv += '"' + r.label + '",' + (r.amount || 0) + "\r\n"; });
+  csv += "\r\nDÉPENSES\r\nLibellé,Catégorie,Montant,Note\r\n";
+  rows.forEach(r => { csv += '"' + r.label + '","' + r.cat + '",' + (r.amount || 0) + ',"' + (r.note || '') + '"\r\n'; });
+  csv += "\r\nTotal revenus," + calcIncome(mi) + "\r\nTotal dépenses," + calcExpenses(mi) + "\r\nSolde," + (calcIncome(mi) - calcExpenses(mi)) + "\r\n";
+  
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `budget_${MONTHS[mi].toLowerCase()}_${YEAR}_${currentUser}.csv`;
+  a.download = "budget_" + MONTHS[mi].toLowerCase() + "_" + YEAR + "_" + currentUser + ".csv";
   a.click();
 }
 
@@ -1497,7 +1459,7 @@ function renderAll() {
 // ENREGISTREMENT SERVICE WORKER POUR PWA
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
+    navigator.serviceWorker.register('./sw.js?v=' + new Date().getTime())
       .then(reg => console.log('Service Worker enregistré'))
       .catch(err => console.log('Erreur SW:', err));
   });
