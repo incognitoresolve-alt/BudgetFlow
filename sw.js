@@ -1,4 +1,4 @@
-const CACHE_NAME = 'budgetflow-v4';
+const CACHE_NAME = 'budgetflow-v5';
 const ASSETS = [
   './',
   './index.html',
@@ -7,32 +7,37 @@ const ASSETS = [
   './298860.jpg'
 ];
 
-self.addEventListener('install', e => {
-  self.skipWaiting(); // Force l'installation immédiate
-  e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)));
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
+  );
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.map(key => {
-        if (key !== CACHE_NAME) return caches.delete(key);
-      }))
-    )
+      Promise.all(
+        keys.map(key => {
+          if (key !== CACHE_NAME) return caches.delete(key);
+          return null;
+        })
+      )
+    ).then(() => self.clients.claim())
   );
-  self.clients.claim(); // Force le contrôle immédiat de la page
 });
 
-// Stratégie "Network First" : Cherche en ligne d'abord, puis utilise le cache si hors-ligne
-self.addEventListener('fetch', e => {
-  e.respondWith(
-    fetch(e.request)
+self.addEventListener('fetch', event => {
+  if (event.request.method !== 'GET') return;
+
+  event.respondWith(
+    fetch(event.request)
       .then(response => {
-        // Met à jour le cache en arrière-plan
-        const resClone = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(e.request, resClone));
+        const responseClone = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseClone));
         return response;
       })
-      .catch(() => caches.match(e.request)) // Mode hors-ligne
+      .catch(() => caches.match(event.request).then(cached => cached || caches.match('./index.html')))
   );
+});  );
 });
