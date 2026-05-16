@@ -1,39 +1,272 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>BudgetFlow — Planificateur</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<script type="module">
+    // 1. Importation du SDK Firebase
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-<link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#0a0c0f" id="themeColorMeta">
-<link rel="apple-touch-icon" href="./298857.jpg">
+    // 2. TES CLÉS FIREBASE (À remplacer par celles que Firebase t'a données)
+    const firebaseConfig = {
+        apiKey: "TA_CLE_API",
+        authDomain: "ton-projet.firebaseapp.com",
+        projectId: "ton-projet",
+        storageBucket: "ton-projet.appspot.com",
+        messagingSenderId: "123456789",
+        appId: "1:123456789:web:abcdef"
+    };
 
-<style>
-  :root {
-    /* THEME DE BASE (Nuit Dorée) */
-    --bg: #0a0c0f;
-    --surface: #111318;
-    --surface2: #181c23;
-    --border: #252a35;
-    --accent: #f0a500;
-    --accent-text: #000000;
-    --green: #3ddc84;
-    --red: #e05c3a;
-    --text: #e8eaf0;
-    --muted: #5a6070;
-    --blue: #4f9cf9;
-  }
+    // Initialisation de la base de données
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const docRef = doc(db, "linkspace", "profil_boris");
 
-  body.theme-light {
-    /* THEME CLAIR (Clarté Azur) */
-    --bg: #f8f9fa;
-    --surface: #ffffff;
-    --surface2: #f1f3f5;
-    --border: #dee2e6;
-    --accent: #2563eb;
-    --accent-text: #ffffff;
+    // Données de secours si la base est vide
+    const defaultData = {
+        theme: 'theme-gt86-apex', name: 'Boris',
+        bio: 'Conseiller Indépendant en Crédits & Assurances.\nVotre patrimoine piloté avec précision. 📊\n\nBruxelles & Wallonie.',
+        bioStyle: 'bio-style-prestige', avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=250&auto=format&fit=crop&q=80',
+        links: [
+            { title: '📉 Simuler une demande de Crédit', url: 'https://votre-site.com/credit', style: 'style-signature' },
+            { title: '🛡️ Optimiser vos Assurances', url: 'https://votre-site.com/assurance', style: 'style-glass' },
+            { title: '💼 Consulter mon Profil LinkedIn', url: 'https://linkedin.com', style: 'style-carbon' },
+            { title: '📅 Prendre Rendez-vous', url: 'https://calendly.com', style: 'style-signature' }
+        ],
+        customBackgrounds: {}
+    };
+
+    // Pour rendre les variables et fonctions accessibles globalement (car type="module" isole le code)
+    window.appData = {};
+    window.editingBackgrounds = {};
+    window.editingAvatar = '';
+
+    // =========================================================================================
+    // 3. CHARGEMENT DEPUIS FIREBASE
+    // =========================================================================================
+    window.initApp = async function() {
+        try {
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                window.appData = docSnap.data();
+            } else {
+                window.appData = { ...defaultData };
+                await setDoc(docRef, window.appData); // Crée le document initial
+            }
+        } catch (e) {
+            console.error("Erreur de connexion Firebase", e);
+            window.appData = { ...defaultData }; // Mode hors-ligne en cas d'erreur
+        }
+
+        if (!window.appData.customBackgrounds) window.appData.customBackgrounds = {}; 
+        document.getElementById('bodyNode').className = window.appData.theme;
+        playLoaderAnimation();
+    }
+
+    // (Le reste de tes fonctions d'animation et de rendu restent identiques)
+    window.playLoaderAnimation = function() {
+        const loader = document.getElementById('loaderOverlay');
+        const needle = document.getElementById('tachoNeedle');
+        const rpmText = document.getElementById('rpmValue');
+        const modelText = document.getElementById('loaderModelText');
+
+        const mechanicalConfigs = {
+            'theme-gt86-apex': { targetDeg: 120, rpm: 7400, name: 'FA20 BOXER STARTING...' },
+            'theme-lc500-prestige': { targetDeg: 90, rpm: 6600, name: 'MULTI-STAGE HYBRID READY' },
+            'theme-3000gt-analog': { targetDeg: 100, rpm: 7000, name: 'TWIN TURBO SPOOLING...' },
+            'theme-nsx-pure': { targetDeg: 140, rpm: 8200, name: 'VTEC ENGAGED...' },
+            'theme-tokyo-finance': { targetDeg: 110, rpm: 9999, name: 'MARKET OPENING...' }
+        };
+
+        const config = mechanicalConfigs[window.appData.theme] || mechanicalConfigs['theme-lc500-prestige'];
+        modelText.innerText = config.name;
+
+        setTimeout(() => {
+            needle.style.transform = `translateX(-50%) rotate(${config.targetDeg}deg)`;
+            let currentRpm = 0;
+            const interval = setInterval(() => {
+                currentRpm += (config.rpm / 35); 
+                if(currentRpm >= config.rpm) { currentRpm = config.rpm; clearInterval(interval); }
+                rpmText.innerText = Math.floor(currentRpm);
+            }, 30);
+
+            setTimeout(() => {
+                loader.style.opacity = '0';
+                setTimeout(() => {
+                    loader.style.display = 'none';
+                    document.getElementById('mainContainer').style.opacity = '1';
+                    renderPublicPage();
+                }, 600);
+            }, 1800);
+        }, 300);
+    }
+
+    window.renderPublicPage = function() {
+        document.getElementById('pubName').innerText = window.appData.name;
+        const bioEl = document.getElementById('pubBio');
+        bioEl.innerText = window.appData.bio;
+        bioEl.className = 'bio ' + (window.appData.bioStyle || 'bio-style-prestige');
+        document.getElementById('pubAvatar').src = window.appData.avatar || 'https://via.placeholder.com/150';
+        
+        const currentCustomBg = window.appData.customBackgrounds[window.appData.theme];
+        if (currentCustomBg) { document.getElementById('bodyNode').style.setProperty('--custom-bg-url', `url(${currentCustomBg})`); } 
+        else { document.getElementById('bodyNode').style.removeProperty('--custom-bg-url'); }
+
+        const container = document.getElementById('pubLinksContainer');
+        container.innerHTML = '';
+        
+        window.appData.links.forEach((link, index) => {
+            const a = document.createElement('a');
+            a.href = link.url; a.target = '_blank'; 
+            a.className = 'link-btn ' + (link.style || 'style-signature'); 
+            a.innerText = link.title;
+            a.style.animationDelay = `${0.1 + (index * 0.08)}s`;
+            container.appendChild(a);
+        });
+    }
+
+    // =========================================================================================
+    // 4. ADMIN & SAUVEGARDE SUR FIREBASE
+    // =========================================================================================
+    let clickCount = 0; let clickTimer;
+    document.getElementById('pubAvatar').addEventListener('click', function(e) {
+        e.preventDefault(); clickCount++; clearTimeout(clickTimer);
+        if (clickCount === 3) { clickCount = 0; injectSystem(); openModal('loginModal'); } 
+        else { clickTimer = setTimeout(() => { clickCount = 0; }, 500); }
+    });
+
+    const _s = '<div class="modal" id="loginModal"><div class="modal-content" style="max-width:360px;"><h2>🔐 Accès Conseiller</h2><div class="form-group"><label>Clé Secrète</label><input type="password" id="adminPassword" placeholder="Mot de passe"></div><div class="btn-group"><button class="btn btn-secondary" onclick="closeModal(\'loginModal\')">Fermer</button><button class="btn btn-primary" onclick="checkLogin()">Accéder</button></div></div></div><div class="modal" id="adminPanel"><div class="modal-content"><h2>🛠️ Gestion du Profil</h2><div class="form-group"><label>Atmosphère Globale</label><select id="configTheme" onchange="handleThemeChange(this.value)"><option value="theme-lc500-prestige">🟠 Lexus LC500h (Luxe)</option><option value="theme-gt86-apex">🔴 Toyota GT86 (Dynamisme)</option><option value="theme-3000gt-analog">🔵 Mitsubishi 3000GT (Tech)</option><option value="theme-nsx-pure">⚪ Honda NSX (Pureté)</option><option value="theme-tokyo-finance">📈 Tokyo x Finance (Métropole)</option></select><div class="upload-zone"><label class="upload-label" for="bgUploadInput">📸 Changer l\'image de fond globale</label><input type="file" id="bgUploadInput" accept="image/*" onchange="processBackgroundUpload(event)"><img id="bgPreview" class="upload-preview" src=""><button type="button" id="btnRemoveBg" class="btn-remove-bg" onclick="removeCustomBackground()">Rétablir l\'image auto</button></div></div><div class="form-group"><label>Nom d\'affichage</label><input type="text" id="configName"></div><div class="form-group"><label>Style Typographique de la Biographie</label><select id="configBioStyle"><option value="bio-style-prestige">🏛️ Prestige (Élégant, Serif, Italique)</option><option value="bio-style-mecanique">⚙️ Mécanique (Technique, Monospace, Encart)</option><option value="bio-style-dynamique">🚀 Dynamique (Gras, Capitales, Blanc Pur)</option></select><textarea id="configBio" rows="4" style="margin-top:10px;"></textarea></div><div class="form-group"><label>Photo de Profil</label><div class="upload-zone" style="margin-top:0;"><label class="upload-label" for="avatarUploadInput">📸 Choisir depuis la galerie</label><input type="file" id="avatarUploadInput" accept="image/*" onchange="processAvatarUpload(event)"><br><img id="avatarPreview" class="upload-preview" style="border-radius:50%;max-height:80px;width:80px;object-fit:cover;margin-top:10px;display:none;"></div></div><h3 style="font-size:0.95rem;margin:25px 0 12px;color:#94a3b8;text-transform:uppercase;">Passerelles & Liens</h3><div id="adminLinksList"></div><button class="btn btn-secondary" style="background:#020406;border:1px dashed #1e293b;margin-bottom:20px;" onclick="addLinkRow()">➕ Ajouter une passerelle</button><div class="btn-group"><button class="btn btn-secondary" onclick="closeModal(\'adminPanel\');window.location.reload();">Annuler</button><button class="btn btn-primary" onclick="saveConfiguration()">Déployer 🚀</button></div></div></div>';
+
+    window.injectSystem = function() { if (!document.getElementById('loginModal')) { document.body.insertAdjacentHTML('beforeend', _s); } }
+    window.openModal = function(id) { document.getElementById(id).style.display = 'flex'; }
+    window.closeModal = function(id) { document.getElementById(id).style.display = 'none'; }
+
+    window.checkLogin = function() {
+        if (document.getElementById('adminPassword').value === 'admin123') {
+            closeModal('loginModal'); document.getElementById('adminPassword').value = ''; openAdminPanel();
+        } else { alert('Accès refusé.'); }
+    }
+
+    window.openAdminPanel = function() {
+        window.editingBackgrounds = { ...window.appData.customBackgrounds };
+        window.editingAvatar = window.appData.avatar || defaultData.avatar;
+        document.getElementById('configTheme').value = window.appData.theme;
+        document.getElementById('configName').value = window.appData.name;
+        document.getElementById('configBio').value = window.appData.bio;
+        document.getElementById('configBioStyle').value = window.appData.bioStyle || 'bio-style-prestige';
+        
+        const ap = document.getElementById('avatarPreview');
+        ap.src = window.editingAvatar; ap.style.display = 'inline-block';
+        updateUploadUI(window.appData.theme);
+        const list = document.getElementById('adminLinksList'); list.innerHTML = '';
+        window.appData.links.forEach(l => createAdminLinkRow(l.title, l.url, l.style));
+        openModal('adminPanel');
+    }
+
+    window.handleThemeChange = function(t) {
+        document.getElementById('bodyNode').className = t;
+        if(window.editingBackgrounds[t]) document.getElementById('bodyNode').style.setProperty('--custom-bg-url',`url(${window.editingBackgrounds[t]})`);
+        else document.getElementById('bodyNode').style.removeProperty('--custom-bg-url');
+        updateUploadUI(t);
+    }
+
+    window.processBackgroundUpload = function(event) {
+        const file = event.target.files[0]; if(!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                const MAX=1280; let w=img.width, h=img.height;
+                if(w>h){ if(w>MAX){h*=MAX/w;w=MAX;} } else { if(h>MAX){w*=MAX/h;h=MAX;} }
+                canvas.width=w; canvas.height=h;
+                canvas.getContext('2d').drawImage(img,0,0,w,h);
+                window.editingBackgrounds[document.getElementById('configTheme').value] = canvas.toDataURL('image/jpeg',0.7);
+                handleThemeChange(document.getElementById('configTheme').value);
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    window.processAvatarUpload = function(event) {
+        const file = event.target.files[0]; if(!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                const MAX=400; let w=img.width, h=img.height;
+                if(w>h){ if(w>MAX){h*=MAX/w;w=MAX;} } else { if(h>MAX){w*=MAX/h;h=MAX;} }
+                canvas.width=w; canvas.height=h;
+                canvas.getContext('2d').drawImage(img,0,0,w,h);
+                window.editingAvatar = canvas.toDataURL('image/jpeg',0.8);
+                const ap = document.getElementById('avatarPreview');
+                ap.src = window.editingAvatar; ap.style.display='inline-block';
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    window.removeCustomBackground = function() {
+        const t = document.getElementById('configTheme').value;
+        delete window.editingBackgrounds[t];
+        document.getElementById('bgUploadInput').value='';
+        handleThemeChange(t);
+    }
+
+    window.updateUploadUI = function(t) {
+        const prev = document.getElementById('bgPreview');
+        const btn  = document.getElementById('btnRemoveBg');
+        if(window.editingBackgrounds[t]){ prev.src=window.editingBackgrounds[t]; prev.style.display='inline-block'; btn.style.display='inline-block'; }
+        else { prev.src=''; prev.style.display='none'; btn.style.display='none'; }
+    }
+
+    window.createAdminLinkRow = function(title='', url='', btnStyle='style-signature') {
+        const div = document.createElement('div'); div.className='admin-link-item';
+        div.innerHTML = `<button class="btn btn-danger" onclick="this.parentElement.remove()">X</button>
+            <div class="form-group" style="margin-bottom:8px;max-width:85%;"><label>Texte affiché</label><input type="text" class="link-title-input" value="${title}"></div>
+            <div class="form-group" style="margin-bottom:8px;max-width:85%;"><label>Style visuel du bouton</label>
+            <select class="link-style-input">
+                <option value="style-signature" ${btnStyle==='style-signature'?'selected':''}>🌟 Signature (Couleur du Thème)</option>
+                <option value="style-carbon"    ${btnStyle==='style-carbon'   ?'selected':''}>⬛ Carbon Stealth (Noir intense)</option>
+                <option value="style-glass"     ${btnStyle==='style-glass'    ?'selected':''}>🪞 Glass Luxe (Translucide)</option>
+            </select></div>
+            <div class="form-group" style="margin:0;"><label>Lien cible</label><input type="text" class="link-url-input" value="${url}"></div>`;
+        document.getElementById('adminLinksList').appendChild(div);
+    }
+
+    window.addLinkRow = function() { createAdminLinkRow('','','style-signature'); }
+
+    window.saveConfiguration = async function() {
+        // MAJ de l'objet
+        window.appData.theme    = document.getElementById('configTheme').value;
+        window.appData.name     = document.getElementById('configName').value;
+        window.appData.bio      = document.getElementById('configBio').value;
+        window.appData.bioStyle = document.getElementById('configBioStyle').value;
+        window.appData.avatar   = window.editingAvatar;
+        window.appData.customBackgrounds = { ...window.editingBackgrounds };
+        window.appData.links    = [];
+        
+        document.querySelectorAll('.admin-link-item').forEach(row => {
+            const title = row.querySelector('.link-title-input').value;
+            const url   = row.querySelector('.link-url-input').value;
+            const style = row.querySelector('.link-style-input').value;
+            if(title && url) window.appData.links.push({ title, url, style });
+        });
+
+        // ENVOI À FIREBASE
+        try {
+            document.querySelector('.btn-primary').innerText = "Déploiement...";
+            await setDoc(docRef, window.appData);
+            window.location.reload();
+        } catch(e) {
+            console.error(e);
+            alert('Erreur lors de la sauvegarde. Ton fichier image est peut-être encore trop lourd pour Firestore (limite 1Mo).');
+            document.querySelector('.btn-primary').innerText = "Déployer 🚀";
+        }
+    }
+
+    // Démarrage
+    initApp();
+</script>
     --green: #16a34a;
     --red: #dc2626;
     --text: #212529;
